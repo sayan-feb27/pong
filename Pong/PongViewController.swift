@@ -40,6 +40,8 @@ class PongViewController: UIViewController {
     @IBOutlet var userScoreLabel: UILabel!
     
     @IBOutlet var enemyScoreLabel: UILabel!
+    
+    @IBOutlet var winnerLabel: UILabel!
 
     // MARK: - Instance Properties
 
@@ -96,41 +98,25 @@ class PongViewController: UIViewController {
         return audioPlayer
     }()
 
-    /// Эта переменная хранит счет пользователя
     var userScore: Int = 0 {
         didSet {
-            /// При каждом обновлении значения переменной - обновляем текст в лэйбле
-            updateUserScoreLabel()
+            updateScoreLabel(player: "user")
+            checkIfGameHasEnded()
         }
     }
     
     var enemyScore: Int = 0 {
         didSet {
-            updateEnemyScoreLabel()
+            updateScoreLabel(player: "enemy")
+            checkIfGameHasEnded()
         }
     }
+    
+    let maxScore: Int = 5;
+    var gameHasEnded: Bool = false;
 
-    // MARK: - Instance Methods
-
-    /// Эта функция запускается 1 раз когда представление экрана загрузилось
-    /// и вот-вот покажется в окне отображения
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        /*
-        NOTE: 👨‍💻 Заметка по настройке экрана игры 👨‍💻
-
-        Сейчас этот код выделен серым, потому что слэш со звездочкой
-        над этим текстом и под этим текстом `/* */` делают его многострочным комменатрием.
-        Также комментарии бывают однострочные, они начинаются с двух слэшей: `//`
-        Комментарии в коде - это заметки разработчиков о работе кусочка кода.
-        Комментарии не учитываются при работе программы, а просто игнорируются.
-
-        Код на 127-ой строке настраивает все необходимое для игры.
-        Сейчас он закомментирован - в начале строки стоят два слэша `//`,
-        и функция `configurePongGame()` не запустится.
-        Удали два слэша в начале 127-ой строки и запусти проект, чтобы игра заработала!
-        */
 
         configurePongGame()
         
@@ -153,7 +139,6 @@ class PongViewController: UIViewController {
         ballView.layer.cornerRadius = ballView.bounds.size.height / 2
     }
 
-    /// Эта функция обрабатывает начало всех касаний экрана
     override func touchesBegan(
         _ touches: Set<UITouch>,
         with event: UIEvent?
@@ -178,8 +163,8 @@ class PongViewController: UIViewController {
     ///
     private func configurePongGame() {
         // NOTE: Настраиваем лэйбл со счетом игрока
-        updateUserScoreLabel()
-        updateEnemyScoreLabel()
+        updateScoreLabel(player: "user")
+        updateScoreLabel(player: "enemy")
 
         // NOTE: Включаем обработку жеста движения пальцем по экрану
         self.enabledPanGestureHandling()
@@ -194,12 +179,32 @@ class PongViewController: UIViewController {
         self.backgroundSoundAudioPlayer?.prepareToPlay()
         self.backgroundSoundAudioPlayer?.play()
     }
-
-    private func updateUserScoreLabel() {
-        userScoreLabel.text = "\(userScore)"
+    
+    private func updateScoreLabel(player: String) {
+        if player == "user" {
+            userScoreLabel.text = "\(userScore)"
+        } else {
+            enemyScoreLabel.text = "\(enemyScore)"
+        }
     }
     
-    private func updateEnemyScoreLabel() {
-        enemyScoreLabel.text = "\(enemyScore)"
+    private func checkIfGameHasEnded() {
+        if gameHasEnded {
+            return
+        }
+        
+        if (userScore >= maxScore) || (enemyScore >= maxScore) {
+            gameHasEnded = true
+            
+            winnerLabel.text = "Winner is " + (userScore >= maxScore ? "user" : "AI")
+            winnerLabel.isHidden = false
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                self.winnerLabel.isHidden = true
+                self.userScore = 0
+                self.enemyScore = 0
+                self.gameHasEnded = false
+            }
+        }
     }
 }
